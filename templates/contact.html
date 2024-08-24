@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+
+{% block short_title %}Contact{% endblock %}
+
+{% block title %}Contact{% endblock %}
+
+{% block content %}
+<form hx-post="/contact" hx-disabled-elt="find button" class="contact-form">
+<p>📨 Shoot me a message!</p>
+
+    <input
+            class="form-element"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Name"
+            maxlength="255"
+            required>
+    <input
+            class="form-element"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Email"
+            maxlength="255"
+            required>
+
+    <textarea
+            class="form-element"
+            id="message"
+            name="message"
+            rows="5"
+            placeholder="Message"
+            maxlength="1024"
+            required></textarea>
+
+    <button type="submit" class="primary-button">Send</button>
+</form>
+
+<p><a class="secondary-link" href="/messages">Check the messages that were sent</a></p>
+{% endblock %}
+
+

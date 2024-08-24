@@ -1,0 +1,271 @@
+body {
+    font-family: Arial, serif;
+    background-color: #f6f6f6;
+}
+
+main {
+    padding: 2rem;
+    max-width: 40rem;
+
+    margin-top: 3rem;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    z-index: 1030;
+    width: 100%;
+    height: 4rem;
+    backdrop-filter: blur(20px);
+
+    div.middle-part {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        padding: 1rem 2rem;
+        max-width: 40rem;
+        margin: auto;
+
+        border-bottom: 1px solid #575757;
+    }
+}
+
+h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: Georgia, serif;
+    margin: 0;
+    background-color: salmon;
+    color: white;
+    padding: 0.2rem;
+}
+
+h2 {
+    margin-bottom: 0;
+}
+
+nav {
+    a {
+        font-family: Arial, serif;
+        margin-right: 0.8rem;
+        text-decoration: none;
+        font-weight: bold;
+        color: #575757;
+    }
+
+    a:hover {
+        color: #8a8a8a;
+    }
+
+    a.active {
+        color: #000;
+    }
+
+    @media (max-width: 25rem) {
+        display: none;
+    }
+}
+
+.burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 2rem;
+    height: 1.5rem;
+    cursor: pointer;
+    min-width: 2rem;
+
+    div {
+        width: 100%;
+        height: 0.25rem;
+        background-color: #575757;
+        transition: all 0.3s ease;
+        border-radius: 1rem;
+    }
+    @media (min-width: 25rem) {
+        display: none;
+    }
+}
+
+#menu-toggle {
+    display: none;
+
+    @media (max-width: 25rem) {
+        &:checked + .burger + .navbar-burger-links {
+            display: flex;
+        }
+    }
+}
+
+.navbar-burger-links {
+    display:none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 4rem;
+    left: 0;
+    width: 100%;
+    background-color: #575757;
+
+    a {
+        color: white;
+        padding: 0.3rem;
+        text-align: center;
+        width: 100%;
+        text-decoration: none;
+
+    }
+    .active {
+        font-weight: bold;
+    }
+}
+
+picture.big-picture {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+
+    img {
+        width: 100%;
+        max-width: 40rem;
+        height: auto;
+        border-radius: 2rem;
+    }
+}
+
+textarea, input {
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: 0.5rem;
+    font-family: Arial, serif;
+}
+
+button.primary-button {
+    background-color: hsl(215, 70%, 60%);
+    color: white;
+    font-weight: bold;
+    border: 0;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+
+    &:hover {
+        background-color: hsl(215, 70%, 70%);
+    }
+
+    &:disabled {
+        background-color: hsl(215, 0%, 60%);
+        cursor: not-allowed;
+    }
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+
+    textarea, input {
+        margin-bottom: 0.3rem;
+    }
+
+    button {
+        margin-top: 1rem;
+    }
+}
+
+.secondary-link {
+    color: gray;
+}
+
+.message-entry {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dedede;
+    }
+
+    .name {
+        font-weight: bold;
+    }
+
+    .email {
+        text-decoration: none;
+        color: #8a8a8a;
+        font-style: italic;
+    }
+
+    .time {
+        font-size: 0.8rem;
+        color: #8a8a8a;
+    }
+
+    .date {
+        font-size: 0.8rem;
+        color: #8a8a8a;
+    }
+
+    .contents {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-family: "Gill Sans", serif;
+    }
+
+    &:hover {
+        transform: translateX(5px);
+    }
+}
+
+.message-list {
+    .footer {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+
+.introduction {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+    align-items: flex-start;
+    margin-top: 1rem;
+
+    picture img {
+        height: auto;
+        max-width: 15rem;
+    }
+
+    section {
+        padding-left: 1rem;
+        padding-right: 1rem;
+
+        p {
+            margin-top: 0;
+        }
+    }
+
+    @media (max-width: 40rem) {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+
+.profile-picture img {
+    border-radius: 1rem;
+}

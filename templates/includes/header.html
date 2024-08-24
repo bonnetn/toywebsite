@@ -1,0 +1,21 @@
+<header>
+    <div class="middle-part">
+        <h1>Nicolas!</h1>
+        <nav>
+            <a href="/" class="{% if current_page == "home" %}active{% endif %}">Home</a>
+            <a href="/about" class="{% if current_page == "about" %}active{% endif %}">About</a>
+            <a href="/contact" class="{% if current_page == "contact" %}active{% endif %}">Contact</a>
+        </nav>
+        <input type="checkbox" id="menu-toggle">
+        <label for="menu-toggle" class="burger">
+            <div></div>
+            <div></div>
+            <div></div>
+        </label>
+        <div class="navbar-burger-links">
+            <a href="/" class="{% if current_page == "home" %}active{% endif %}">Home</a>
+            <a href="/about" class="{% if current_page == "about" %}active{% endif %}">About</a>
+            <a href="/contact" class="{% if current_page == "contact" %}active{% endif %}">Contact</a>
+        </div>
+    </div>
+</header>

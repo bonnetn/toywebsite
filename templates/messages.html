@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+
+{% block short_title %}Messages{% endblock %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div hx-get="/message/entries" hx-trigger="load">
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+
+{% block title %}Home{% endblock %}
+{% block short_title %}Home{% endblock %}
+
+{% block content %}
+<div class="home">
+    <p>Welcome to the greatest website you've ever seen.</p>
+
+    <p>Here is a picture of a panda.</p>
+    <picture class="big-picture">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/5616px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 5616px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/2560px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 2560px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/1280px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 1280px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/1024px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 1024px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/800px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 800px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/640px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 640px)">
+        <source srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/320px-A_picture_of_a_Panda.jpg"
+                media="(min-width: 320px)">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_picture_of_a_Panda.jpg/320px-A_picture_of_a_Panda.jpg" alt="a panda">
+    </picture>
+</div>
+{% endblock %}
