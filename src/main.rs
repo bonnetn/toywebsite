@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use sqlx::sqlite::SqlitePoolOptions;
 use crate::app::error::StartupError;
 use crate::app::handler::Handler;
 use crate::app::message::repository::Repository;
@@ -16,11 +17,13 @@ async fn main() {
 }
 
 async fn run() -> Result<(), StartupError> {
-    let db_url = "db/database.sqlite";
-
-    let sqlite_repository = SQLiteRepository::new(db_url)
+    let conn = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect("db/database.sqlite")
         .await
-        .map_err(|e| StartupError::CannotCreateRepository(e))?;
+        .map_err(|e| StartupError::CannotCreateConnectionPool(e))?;
+
+    let sqlite_repository = SQLiteRepository::new(conn.clone());
     let sqlite_repository: Arc<dyn Repository> = Arc::new(sqlite_repository);
 
     let handler = Handler::new(sqlite_repository).await?;

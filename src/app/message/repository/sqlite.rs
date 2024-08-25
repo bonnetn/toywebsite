@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use async_trait::async_trait;
-use sqlx::SqlitePool;
+use sqlx::{Pool, Sqlite, SqlitePool};
 use sqlx::sqlite::SqlitePoolOptions;
 use crate::app::message::{Message, repository};
 use crate::app::message::model::PageToken;
@@ -14,14 +14,8 @@ pub struct SQLiteRepository {
 
 
 impl SQLiteRepository {
-    pub async fn new(path: &str) -> Result<Self> {
-        let conn = SqlitePoolOptions::new()
-            .max_connections(5)
-            .connect(path)
-            .await
-            .map_err(|e| Error::SqlxError(e))?;
-
-        Ok(SQLiteRepository { pool: conn })
+    pub fn new(pool: Pool<Sqlite>) -> Self {
+        SQLiteRepository { pool }
     }
 }
 

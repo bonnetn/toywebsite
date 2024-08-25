@@ -9,7 +9,7 @@ pub enum StartupError {
     CouldNotReadStaticFile(&'static str, std::io::Error),
     FailedToCompressStaticFile(std::io::Error),
     InvalidListenAddress(AddrParseError),
-    CannotCreateRepository(crate::app::message::repository::sqlite::Error),
+    CannotCreateConnectionPool(sqlx::Error),
 }
 
 
@@ -31,8 +31,8 @@ impl std::fmt::Display for StartupError {
             StartupError::FailedToCompressStaticFile(e) =>
                 write!(f, "compression issue: {}", e),
 
-            StartupError::CannotCreateRepository(e) =>
-                write!(f, "cannot create repository: {}", e),
+            StartupError::CannotCreateConnectionPool(e) =>
+                write!(f, "cannot create connection pool: {}", e),
         }
     }
 }
