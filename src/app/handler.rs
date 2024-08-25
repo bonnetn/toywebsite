@@ -14,7 +14,8 @@ use serde::Deserialize;
 use tokio::fs;
 use xxhash_rust::const_xxh3::xxh3_64;
 use crate::app::error::{HTTPError, StartupError};
-use crate::app::message::{Message, Repository};
+use crate::app::message::{Message};
+use crate::app::message::repository::Repository;
 
 
 #[derive(Template)]
@@ -71,12 +72,12 @@ struct ListMessageEntriesQuery {
 }
 
 pub struct Handler {
-    repository: Arc<Repository>,
+    repository: Arc<dyn Repository>,
     static_resources: HashMap<String, StaticResource>,
 }
 
 impl Handler {
-    pub async fn new(repository: Arc<Repository>) -> Result<Self, StartupError> {
+    pub async fn new(repository: Arc<dyn Repository>) -> Result<Self, StartupError> {
         let paths = [
             ("/styles.css", "static/styles.css", "text/css"),
             ("/favicon.ico", "static/favicon.ico", "image/x-icon"),
@@ -196,7 +197,7 @@ impl Handler {
 
                 let message = Message::new(timestamp, name, email, contents);
 
-                self.repository.create_message(&message)
+                self.repository.create(&message)
                     .await
                     .map_err(|e| HTTPError::RepositoryError(e))?;
 
@@ -218,7 +219,7 @@ impl Handler {
                     .transpose()
                     .map_err(|e| HTTPError::InvalidField("page token", e))?;
 
-                let (results, next_page_token) = self.repository.list_messages(max_results, page_token)
+                let (results, next_page_token) = self.repository.list(max_results, page_token)
                     .await
                     .map_err(|e| HTTPError::RepositoryError(e))?;
 

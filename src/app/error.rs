@@ -1,4 +1,5 @@
 use std::net::AddrParseError;
+use crate::app::message::repository;
 use crate::app::validation;
 
 #[derive(Debug)]
@@ -8,6 +9,7 @@ pub enum StartupError {
     CouldNotReadStaticFile(&'static str, std::io::Error),
     FailedToCompressStaticFile(std::io::Error),
     InvalidListenAddress(AddrParseError),
+    CannotCreateRepository(crate::app::message::repository::sqlite::Error),
 }
 
 
@@ -28,6 +30,9 @@ impl std::fmt::Display for StartupError {
 
             StartupError::FailedToCompressStaticFile(e) =>
                 write!(f, "compression issue: {}", e),
+
+            StartupError::CannotCreateRepository(e) =>
+                write!(f, "cannot create repository: {}", e),
         }
     }
 }
@@ -50,7 +55,7 @@ pub enum HTTPError {
     InvalidQueryParameters(serde_urlencoded::de::Error),
     MissingHeader(&'static str),
     PageNotFound(),
-    RepositoryError(crate::app::message::Error),
+    RepositoryError(repository::Error),
     TemplateRenderingIssue(askama::Error),
 }
 

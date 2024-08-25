@@ -15,7 +15,7 @@ pub struct Server {
 
 impl Server {
     pub fn new(listen_address: String, handler: Arc<Handler>) -> Self {
-        Server{
+        Server {
             listen_address,
             handler,
         }
