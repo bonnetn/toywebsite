@@ -40,11 +40,6 @@ struct AboutTemplate<'a> {
 #[template(path = "messages.html")]
 struct MessagesTemplate<'a> {
     current_page: &'a str,
-}
-
-#[derive(Template)]
-#[template(path = "message_entries.html")]
-struct MessageEntriesTemplate {
     entries: Vec<MessageEntry>,
     max_results: usize,
     has_next_page: bool,
@@ -205,7 +200,7 @@ impl Handler {
                 HTTPResponse::static_html(body)
             }
 
-            (&hyper::Method::GET, "/message/entries", _) => {
+            (&hyper::Method::GET, "/messages", _) => {
                 let query_params = query_params
                     .unwrap_or("".to_string());
 
@@ -236,7 +231,8 @@ impl Handler {
                     })
                     .collect();
 
-                let body = render_template(MessageEntriesTemplate {
+                let body = render_template(MessagesTemplate {
+                    current_page: "messages",
                     entries: results,
                     max_results: query.max_results.unwrap_or(10),
                     has_next_page: next_page_token.is_some(),
@@ -244,13 +240,6 @@ impl Handler {
                 })?;
 
                 HTTPResponse::dynamic_html(body)
-            }
-
-            (&hyper::Method::GET, "/messages", _) => {
-                let body = render_template(MessagesTemplate {
-                    current_page: "messages",
-                })?;
-                HTTPResponse::static_html(body)
             }
 
             (&hyper::Method::GET, _, Some(resource)) => {

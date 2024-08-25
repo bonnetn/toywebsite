@@ -6,7 +6,32 @@
 {% block title %}Messages{% endblock %}
 
 {% block content %}
-<div hx-get="/message/entries" hx-trigger="load">
+<div class="message-list">
+    <br/>
+
+    {% for entry in entries %}
+    <div class="message-entry">
+        <div class="header">
+            <p>
+                <span class="name">{{ entry.name }}</span> <a class="email" href="mailto:{{entry.email}}">({{ entry.email }})</a>
+            </p>
+            <p class="time">{{ entry.time }}</p>
+        </div>
+        <div class="contents">
+            {{ entry.message }}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if has_next_page %}
+    <div class="footer">
+        <form action="/messages">
+            <input type="hidden" name="max_results" value="{{ max_results }}">
+            <input type="hidden" name="page_token" value="{{ next_page_token }}">
+            <button class="primary-button"> Next page </button>
+        </form>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 

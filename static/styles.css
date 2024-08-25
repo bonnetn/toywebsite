@@ -261,7 +261,10 @@ button.primary-button {
     @media (max-width: 40rem) {
         flex-direction: column;
         align-items: center;
-        text-align: center;
+        text-align: left;
+        section {
+            margin-top: 1rem;
+        }
     }
 }
 
