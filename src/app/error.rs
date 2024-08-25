@@ -1,12 +1,13 @@
 use std::net::AddrParseError;
+use crate::app::validation;
 
 #[derive(Debug)]
 pub enum StartupError {
-    InvalidListenAddress(AddrParseError),
-    CouldNotBind(std::io::Error),
     CouldNotAcceptConnection(std::io::Error),
+    CouldNotBind(std::io::Error),
     CouldNotReadStaticFile(&'static str, std::io::Error),
     FailedToCompressStaticFile(std::io::Error),
+    InvalidListenAddress(AddrParseError),
 }
 
 
@@ -40,24 +41,40 @@ impl std::error::Error for StartupError {
 
 #[derive(Debug)]
 pub enum HTTPError {
-    BadRequest(&'static str),
-    InvalidContentType(),
-    ContentTooLarge(),
-    PageNotFound(),
-    TemplateRenderingIssue(askama::Error),
-    FailedToCompress(std::io::Error),
     CannotReadRequestBody(hyper::Error),
-    CannotReadDatabaseFile(std::io::Error),
-    CannotAppendDatabaseFile(std::io::Error),
-    CannotSerializeMessageToDatabase(serde_json::Error),
-    CannotDeserializeMessageFromDatabase(serde_json::Error),
+    ContentTooLarge(),
+    FailedToCompress(std::io::Error),
+    InvalidContentType(),
+    InvalidField(&'static str, validation::Error),
+    InvalidFormData(serde::de::value::Error),
+    InvalidQueryParameters(serde_urlencoded::de::Error),
+    MissingHeader(&'static str),
+    PageNotFound(),
+    RepositoryError(crate::app::message::Error),
+    TemplateRenderingIssue(askama::Error),
+}
+
+impl HTTPError {
+    pub fn status_code(&self) -> hyper::StatusCode {
+        match self {
+            HTTPError::CannotReadRequestBody(_) => hyper::StatusCode::INTERNAL_SERVER_ERROR,
+            HTTPError::ContentTooLarge() => hyper::StatusCode::PAYLOAD_TOO_LARGE,
+            HTTPError::FailedToCompress(_) => hyper::StatusCode::INTERNAL_SERVER_ERROR,
+            HTTPError::InvalidContentType() => hyper::StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            HTTPError::InvalidField(_, _) => hyper::StatusCode::BAD_REQUEST,
+            HTTPError::InvalidFormData(_) => hyper::StatusCode::BAD_REQUEST,
+            HTTPError::InvalidQueryParameters(_) => hyper::StatusCode::BAD_REQUEST,
+            HTTPError::MissingHeader(_) => hyper::StatusCode::BAD_REQUEST,
+            HTTPError::PageNotFound() => hyper::StatusCode::NOT_FOUND,
+            HTTPError::RepositoryError(_) => hyper::StatusCode::INTERNAL_SERVER_ERROR,
+            HTTPError::TemplateRenderingIssue(_) => hyper::StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
 
 impl std::fmt::Display for HTTPError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            HTTPError::BadRequest(e) =>
-                write!(f, "bad request: {}", e),
             HTTPError::InvalidContentType() =>
                 write!(f, "invalid content type"),
             HTTPError::ContentTooLarge() =>
@@ -70,14 +87,16 @@ impl std::fmt::Display for HTTPError {
                 write!(f, "compression issue: {}", e),
             HTTPError::CannotReadRequestBody(e) =>
                 write!(f, "could not read request body: {}", e),
-            HTTPError::CannotReadDatabaseFile(e) =>
-                write!(f, "could not read database file: {}", e),
-            HTTPError::CannotAppendDatabaseFile(e) =>
-                write!(f, "could not append database file: {}", e),
-            HTTPError::CannotSerializeMessageToDatabase(e) =>
-                write!(f, "could not serialize message to database: {}", e),
-            HTTPError::CannotDeserializeMessageFromDatabase(e) =>
-                write!(f, "could not deserialize message from database: {}", e),
+            HTTPError::InvalidField(field, err) =>
+                write!(f, "invalid field {}: {}", field, err),
+            HTTPError::RepositoryError(e) =>
+                write!(f, "repository error: {}", e),
+            HTTPError::InvalidFormData(e) =>
+                write!(f, "invalid form data: {}", e),
+            HTTPError::InvalidQueryParameters(e) =>
+                write!(f, "invalid query parameters: {}", e),
+            HTTPError::MissingHeader(name) =>
+                write!(f, "missing {} header", name),
         }
     }
 }

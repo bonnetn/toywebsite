@@ -1,5 +1,5 @@
 mod model;
 mod repository;
 
-pub use model::{Message, Name, Email, Contents};
-pub use repository::Repository;
+pub use model::Message;
+pub use repository::{Repository, Error};

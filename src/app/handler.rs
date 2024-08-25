@@ -14,7 +14,7 @@ use serde::Deserialize;
 use tokio::fs;
 use xxhash_rust::const_xxh3::xxh3_64;
 use crate::app::error::{HTTPError, StartupError};
-use crate::app::message::{Contents, Email, Message, Name, Repository};
+use crate::app::message::{Message, Repository};
 
 
 #[derive(Template)]
@@ -120,22 +120,8 @@ impl Handler {
             }
             Err(e) => {
                 println!("Error: {:?}", e);
-                let status = match e {
-                    HTTPError::BadRequest(_) => 400,
-                    HTTPError::PageNotFound() => 404,
-                    HTTPError::ContentTooLarge() => 413,
-                    HTTPError::FailedToCompress(_) => 500,
-                    HTTPError::TemplateRenderingIssue(_) => 500,
-                    HTTPError::InvalidContentType() => 415,
-                    HTTPError::CannotReadRequestBody(_) => 500, // TODO: Should be 400?
-                    HTTPError::CannotReadDatabaseFile(_) => 500,
-                    HTTPError::CannotAppendDatabaseFile(_) => 500,
-                    HTTPError::CannotSerializeMessageToDatabase(_) => 500,
-                    HTTPError::CannotDeserializeMessageFromDatabase(_) => 500,
-                };
-
                 Response::builder()
-                    .status(status)
+                    .status(e.status_code())
                     .body(Full::from(e.to_string()))
                     .unwrap()
             }
@@ -154,7 +140,7 @@ impl Handler {
             .body()
             .size_hint()
             .upper()
-            .ok_or(HTTPError::BadRequest("Missing Content-Length header"))?;
+            .ok_or(HTTPError::MissingHeader("Content-Length"))?;
 
         if body_max_size > 1024 * 16 {
             return Err(HTTPError::ContentTooLarge());
@@ -198,17 +184,21 @@ impl Handler {
                 }
 
                 let form_data: ContactFormData = serde_urlencoded::from_bytes(&request_body)
-                    .map_err(|_| HTTPError::BadRequest("Invalid form data"))?;
+                    .map_err(|e| HTTPError::InvalidFormData(e))?;
 
-                self.repository.create_contact_entry(
-                    &Message::new(
-                        SystemTime::now(),
-                        Name::new(form_data.name)?,
-                        Email::new(form_data.email)?,
-                        Contents::new(form_data.message)?,
-                    )
-                ).await?;
+                let timestamp = SystemTime::now();
+                let name = form_data.name.try_into()
+                    .map_err(|e| HTTPError::InvalidField("name", e))?;
+                let email = form_data.email.try_into()
+                    .map_err(|e| HTTPError::InvalidField("email", e))?;
+                let contents = form_data.message.try_into()
+                    .map_err(|e| HTTPError::InvalidField("message", e))?;
 
+                let message = Message::new(timestamp, name, email, contents);
+
+                self.repository.create_message(&message)
+                    .await
+                    .map_err(|e| HTTPError::RepositoryError(e))?;
 
                 let body = "<p>Thank you for your message!</p>".to_string();
                 HTTPResponse::static_html(body)
@@ -219,12 +209,18 @@ impl Handler {
                     .unwrap_or("".to_string());
 
                 let query: ListMessageEntriesQuery = serde_urlencoded::from_str(&query_params)
-                    .map_err(|_| HTTPError::BadRequest("Invalid query parameters"))?;
+                    .map_err(|e| HTTPError::InvalidQueryParameters(e))?;
 
-                let (results, next_page_token) = self.repository.list_contact_entries(
-                    query.max_results.unwrap_or(10),
-                    &query.page_token,
-                ).await?;
+                let max_results = query.max_results.unwrap_or(10);
+
+                let page_token = query.page_token
+                    .map(|s| s.try_into())
+                    .transpose()
+                    .map_err(|e| HTTPError::InvalidField("page token", e))?;
+
+                let (results, next_page_token) = self.repository.list_messages(max_results, page_token)
+                    .await
+                    .map_err(|e| HTTPError::RepositoryError(e))?;
 
                 let results = results
                     .into_iter()
@@ -243,7 +239,7 @@ impl Handler {
                     entries: results,
                     max_results: query.max_results.unwrap_or(10),
                     has_next_page: next_page_token.is_some(),
-                    next_page_token: next_page_token.unwrap_or_default(),
+                    next_page_token: next_page_token.map(|p| p.to_string()).unwrap_or_default(),
                 })?;
 
                 HTTPResponse::dynamic_html(body)
