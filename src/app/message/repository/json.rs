@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use async_trait::async_trait;
 use serde_json::Deserializer;
 use tokio::fs;
 use tokio::fs::File;
@@ -26,7 +25,6 @@ impl JSONRepository {
     }
 }
 
-#[async_trait]
 impl Repository for JSONRepository {
     async fn create(&self, msg: &Message) -> repository::Result<()> {
         let msg_dto: MessageDTO = msg.into();
@@ -50,46 +48,46 @@ impl Repository for JSONRepository {
     }
 
     async fn list(&self, max_results: usize, page_token: Option<PageToken>) -> repository::Result<(Vec<Message>, Option<PageToken>)> {
-        let max_results = match max_results {
-            v if v == 0 =>
-                MAX_RESULTS,
-            v if v > MAX_RESULTS =>
-                MAX_RESULTS,
-            v =>
-                v
-        };
+            let max_results = match max_results {
+                v if v == 0 =>
+                    MAX_RESULTS,
+                v if v > MAX_RESULTS =>
+                    MAX_RESULTS,
+                v =>
+                    v
+            };
 
-        let page_token: usize = match page_token {
-            Some(token) =>
-                token.offset(),
-            None =>
-                0,
-        };
+            let page_token: usize = match page_token {
+                Some(token) =>
+                    token.offset(),
+                None =>
+                    0,
+            };
 
-        let database_contents = fs::read(&self.filename)
-            .await
-            .map_err(|e| Error::CannotReadDatabaseFile(e))?;
+            let database_contents = fs::read(&self.filename)
+                .await
+                .map_err(|e| Error::CannotReadDatabaseFile(e))?;
 
-        let dtos = Deserializer::from_slice(&database_contents)
-            .into_iter::<MessageDTO>()
-            .skip(page_token)
-            .take(max_results)
-            .collect::<std::result::Result<Vec<MessageDTO>, _>>()
-            .map_err(|e| Error::CannotDeserializeMessageFromDatabase(e))?;
+            let dtos = Deserializer::from_slice(&database_contents)
+                .into_iter::<MessageDTO>()
+                .skip(page_token)
+                .take(max_results)
+                .collect::<std::result::Result<Vec<MessageDTO>, _>>()
+                .map_err(|e| Error::CannotDeserializeMessageFromDatabase(e))?;
 
-        let messages = dtos
-            .into_iter()
-            .map(|dto| dto.try_into())
-            .collect::<Result<Vec<Message>, Error>>()?;
+            let messages = dtos
+                .into_iter()
+                .map(|dto| dto.try_into())
+                .collect::<Result<Vec<Message>, Error>>()?;
 
-        let next_page_token = if messages.len() < max_results {
-            None
-        } else {
-            Some(PageToken::new(page_token + max_results))
-        };
+            let next_page_token = if messages.len() < max_results {
+                None
+            } else {
+                Some(PageToken::new(page_token + max_results))
+            };
 
-        Ok((messages, next_page_token))
-    }
+            Ok((messages, next_page_token))
+        }
 }
 
 mod dto {

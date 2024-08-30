@@ -14,7 +14,7 @@ use crate::app::message::repository::Repository;
 use crate::app::validation;
 
 
-pub trait Controller: Clone + Send + Sync {
+pub trait Controller: Clone + Send + Sync  {
     fn router(&self) -> Router;
 }
 
@@ -85,7 +85,7 @@ impl IntoResponse for EndpointResponse {
 enum MyError {
     InvalidField(&'static str, validation::Error),
     RenderTemplateFailure(askama::Error),
-    MessageRepositoryError(Box<dyn std::error::Error + Send + Sync>),
+    MessageRepositoryError(Box<dyn std::error::Error + Send + Sync >),
 }
 
 impl Display for MyError {

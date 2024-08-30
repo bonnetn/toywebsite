@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use async_trait::async_trait;
 use sqlx::{Pool, Sqlite, SqlitePool};
 use crate::app::message::{Message, repository};
 use crate::app::message::model::PageToken;
@@ -19,63 +18,64 @@ impl SQLiteRepository {
     }
 }
 
-#[async_trait]
 impl Repository for SQLiteRepository {
     async fn create(&self, message: &Message) -> repository::Result<()> {
-        let timestamp: chrono::DateTime<chrono::Utc> = message.timestamp().into();
-        let name: String = message.name().to_string();
-        let email: String = message.email().to_string();
-        let contents: String = message.contents().to_string();
+        let message = message.clone();
+            let timestamp: chrono::DateTime<chrono::Utc> = message.timestamp().into();
+            let name: String = message.name().to_string();
+            let email: String = message.email().to_string();
+            let contents: String = message.contents().to_string();
 
-        sqlx::query("
+            sqlx::query("
                 INSERT INTO message (timestamp, name, email, contents)
                 VALUES (?1, ?2, ?3, ?4)
             ")
-            .bind(timestamp)
-            .bind(name)
-            .bind(email)
-            .bind(contents)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| Error::SqlxError(e))?;
+                .bind(timestamp)
+                .bind(name)
+                .bind(email)
+                .bind(contents)
+                .execute(&self.pool)
+                .await
+                .map_err(|e| Error::SqlxError(e))
+                .map_err(|e| Box::new(e))?;
 
-        Ok(())
+            Ok(())
     }
 
     async fn list(&self, max_results: usize, page_token: Option<PageToken>) -> repository::Result<(Vec<Message>, Option<PageToken>)> {
-        let page_token: Option<i64> = page_token.map(|t| t.offset().try_into().unwrap());
-        let max_results: i64 = max_results.try_into().unwrap();
+            let page_token: Option<i64> = page_token.map(|t| t.offset().try_into().unwrap());
+            let max_results: i64 = max_results.try_into().unwrap();
 
-        let rows: Vec<MessageDTO> = sqlx::query_as("
+            let rows: Vec<MessageDTO> = sqlx::query_as("
                 SELECT id, timestamp, name, email, contents
                 FROM message
                 WHERE (?1 IS NULL OR id > ?1)
                 ORDER BY id
                 LIMIT ?2
             ")
-            .bind(page_token)
-            .bind(max_results)
-            .fetch_all(&self.pool)
-            .await
-            .unwrap();
+                .bind(page_token)
+                .bind(max_results)
+                .fetch_all(&self.pool)
+                .await
+                .unwrap();
 
-        let next_page_token = if rows.len() < max_results as usize {
-            None
-        } else {
-            rows
-                .last()
-                .map(|r| {
-                    let id = r.id().try_into().unwrap();
-                    PageToken::new(id)
-                })
-        };
+            let next_page_token = if rows.len() < max_results as usize {
+                None
+            } else {
+                rows
+                    .last()
+                    .map(|r| {
+                        let id = r.id().try_into().unwrap();
+                        PageToken::new(id)
+                    })
+            };
 
-        let msgs = rows.into_iter()
-            .map(|r| r.try_into())
-            .collect::<Result<Vec<Message>>>()?;
+            let msgs = rows.into_iter()
+                .map(|r| r.try_into())
+                .collect::<Result<Vec<Message>>>()?;
 
-        Ok((msgs, next_page_token))
-    }
+            Ok((msgs, next_page_token))
+        }
 }
 
 mod dto {
