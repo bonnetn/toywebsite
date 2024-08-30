@@ -1,13 +1,13 @@
 use std::fmt::Display;
 use async_trait::async_trait;
 use sqlx::{Pool, Sqlite, SqlitePool};
-use sqlx::sqlite::SqlitePoolOptions;
 use crate::app::message::{Message, repository};
 use crate::app::message::model::PageToken;
 use crate::app::message::repository::{Repository};
 use crate::app::message::repository::sqlite::dto::MessageDTO;
 use crate::app::validation;
 
+#[derive(Clone, Debug)]
 pub struct SQLiteRepository {
     pool: SqlitePool,
 }

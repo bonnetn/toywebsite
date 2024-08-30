@@ -1,5 +1,5 @@
 pub mod error;
 pub mod server;
-pub mod handler;
+pub mod controller;
 pub mod message;
 pub mod validation;

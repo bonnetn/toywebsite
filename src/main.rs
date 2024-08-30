@@ -1,8 +1,6 @@
-use std::sync::Arc;
 use sqlx::sqlite::SqlitePoolOptions;
+use crate::app::controller::ControllerImpl;
 use crate::app::error::StartupError;
-use crate::app::handler::Handler;
-use crate::app::message::repository::Repository;
 use crate::app::message::repository::sqlite::SQLiteRepository;
 use crate::app::server::Server;
 
@@ -24,12 +22,11 @@ async fn run() -> Result<(), StartupError> {
         .map_err(|e| StartupError::CannotCreateConnectionPool(e))?;
 
     let sqlite_repository = SQLiteRepository::new(conn.clone());
-    let sqlite_repository: Arc<dyn Repository> = Arc::new(sqlite_repository);
 
-    let handler = Handler::new(sqlite_repository).await?;
+    let controller = ControllerImpl::new(sqlite_repository);
     let server = Server::new(
         "127.0.0.1:3000".to_string(),
-        Arc::new(handler),
+        controller,
     );
 
     server.run().await

@@ -13,7 +13,7 @@ use crate::app::validation;
 
 const MAX_RESULTS: usize = 100;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct JSONRepository {
     filename: String,
 }
@@ -120,7 +120,6 @@ mod dto {
         type Error = Error;
 
         fn try_into(self) -> Result<Message, Self::Error> {
-            // TODO: Error?
             let timestamp = self.timestamp.try_into().unwrap();
 
             let timestamp = std::time::UNIX_EPOCH + std::time::Duration::from_nanos(timestamp);

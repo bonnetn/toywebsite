@@ -1,23 +1,29 @@
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::sync::Arc;
-use hyper::service::service_fn;
-use hyper_util::rt::{TokioExecutor, TokioIo};
-use hyper_util::server::conn::auto;
+use http::{HeaderValue, Response};
+use hyper::header::CONTENT_TYPE;
 use tokio::net::TcpListener;
+use tower::{ServiceBuilder};
+use tower_http::compression::{CompressionBody, CompressionLayer};
 use crate::app::error::StartupError;
-use crate::app::handler::Handler;
+use tower_http::services::fs::ServeDir;
+use tower_http::set_header::SetResponseHeaderLayer;
+use tower_http::trace::TraceLayer;
+use axum::body::{Body, HttpBody};
+use tower_http::limit::{RequestBodyLimitLayer};
+use crate::app::controller::{Controller};
 
-pub struct Server {
+pub struct Server<C> {
     listen_address: String,
-    handler: Arc<Handler>,
+    controller: C,
 }
 
-impl Server {
-    pub fn new(listen_address: String, handler: Arc<Handler>) -> Self {
+impl<C> Server<C>
+    where C: Controller + 'static {
+    pub fn new(listen_address: String, controller: C) -> Self {
         Server {
             listen_address,
-            handler,
+            controller,
         }
     }
 
@@ -29,29 +35,50 @@ impl Server {
             .await
             .map_err(|e| StartupError::CouldNotBind(e))?;
 
-        loop {
-            let handler = Arc::clone(&self.handler);
+        let compression = CompressionLayer::new()
+            .gzip(true)
+            .deflate(true)
+            .br(true)
+            .zstd(true);
 
-            let (stream, _) = listener.accept()
-                .await
-                .map_err(|e| StartupError::CouldNotAcceptConnection(e))?;
+        let trace = TraceLayer::new_for_http();
 
-            tokio::spawn(async move {
-                let serve = service_fn(move |req| {
-                    let handler = Arc::clone(&handler);
+        let content_length = SetResponseHeaderLayer::overriding(
+            CONTENT_TYPE,
+            |response: &Response<CompressionBody<Body>>| {
+                if let Some(size) = response.body().size_hint().exact() {
+                    Some(HeaderValue::from_str(&size.to_string()).unwrap())
+                } else {
+                    None
+                }
+            },
+        );
 
-                    async move {
-                        handler.handle(req).await
-                    }
-                });
+        // let etag = SetResponseHeaderLayer::overriding(
+        //     ETAG,
+        //     |response: &Response<Body>| {
+        //         let body = response.body();
+        //         let hash = xxh3_64(body.into_bytes());
+        //         let etag = format!("\"{:x}\"", hash);
+        //         Some(etag)
+        //     },
+        // );
 
-                let io = TokioIo::new(stream);
-                auto::Builder::new(TokioExecutor::new())
-                    .serve_connection(io, serve)
-                    .await
-                    .map_err(|e| eprintln!("Error serving connection: {:?}", e))
-                    .ok();
-            });
-        }
+
+        let middlewares = ServiceBuilder::new()
+            .layer(trace)
+            .layer(RequestBodyLimitLayer::new(1024 * 1024))
+            .layer(content_length)
+            .layer(compression);
+
+        let router = self.controller.router();
+        let app = router
+            .nest_service("/static", ServeDir::new("static"))
+            .layer(middlewares);
+
+
+        axum::serve(listener, app)
+            .await
+            .map_err(|e| StartupError::CouldNotServe(e))
     }
 }
